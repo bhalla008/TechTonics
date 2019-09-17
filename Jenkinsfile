@@ -2,30 +2,33 @@ pipeline {
 
 	agent any
 	
+	environment {
+		
+		DOCKER_IMAGE_NAME = "jb008/dock-repo"
+	}
+	
 	stages {
-
-	      stage('git checkeout'){
-			
+	     	stage('Build Docker Image') {
 			steps {
-				git 'https://github.com/bhalla008/TechTonics.git'
-			     }
+				script {
+					app = docker.build(DOCKER_IMAGE_NAME)
+					}
+				}
 			}
-	       stage('compile') {
-			
-			steps { 
-				sh 'mvn compile'
-			      }
-			}
-		stage('unit test'){
+		
+		
+		stage('Push Docker Image') {
 			steps {
-				sh 'mvn clean test'
-			      }	
-			}
-
-		stage('build'){
-			steps {
-				sh 'mvn clean package'
-			      }
+				script {
+					docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+					    app.push("${env.BUILD_NUMBER}")
+					    app.push("latest")
+					}
+				}
 			}
 		}
+	
+		
+	
 	}	
+}
